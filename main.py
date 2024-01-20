@@ -1,5 +1,7 @@
+import os
 import requests
 import creds
+import time
 
 
 """
@@ -11,6 +13,14 @@ Written: January 19, 2024
 client_id = creds.client_id
 access_token = creds.access_token
 store_hash = creds.store_hash
+art = r"""
+   ___          _             _   _           _       _       
+  / _ \ _ __ __| | ___ _ __  | | | |_ __   __| | __ _| |_ ___ 
+ | | | | '__/ _` |/ _ \ '__| | | | | '_ \ / _` |/ _` | __/ _ \
+ | |_| | | | (_| |  __/ |    | |_| | |_) | (_| | (_| | ||  __/
+  \___/|_|  \__,_|\___|_|     \___/| .__/ \__,_|\__,_|\__\___|
+                                   |_|                        
+"""
 
 
 def get_order_details(order_id):
@@ -24,6 +34,8 @@ def get_order_details(order_id):
 
     if order_details == [{'status': 404, 'message': 'The requested resource was not found.'}]:
         print("Order Not Found!")
+        time.sleep(1)
+        os.system('cls' if os.name == 'nt' else 'clear')
         return update_order_status()
     else:
         date_created = order_details['date_created']
@@ -37,6 +49,7 @@ def get_order_details(order_id):
 
 
 def update_order_status():
+    print(art)
     order_id = input("Enter order ID: ")
     date_created, status, item_count, total, first_name, last_name = get_order_details(order_id)
     print(f"\nDate Created: {date_created}")
@@ -60,6 +73,8 @@ def update_order_status():
             }
             requests.put(url, headers=headers, json=payload)
             print(f"\nOrder {order_id} has been updated to Awaiting Pickup\n")
+            time.sleep(1)
+            os.system('cls' if os.name == 'nt' else 'clear')
             update_order_status()
 
         if mode == "2":
@@ -71,13 +86,22 @@ def update_order_status():
             if archive == "y":
                 requests.delete(url, headers=headers)
                 print(f"\nOrder {order_id} has been updated to 'Complete' and archived.\n")
+                time.sleep(1)
+                os.system('cls' if os.name == 'nt' else 'clear')
+                update_order_status()
             elif archive == "n":
                 print(f"\nOrder {order_id} has been updated to 'Complete'.\n")
+                time.sleep(1)
+                os.system('cls' if os.name == 'nt' else 'clear')
                 update_order_status()
             else:
                 print("Invalid response. Please try again.\n")
+                time.sleep(1)
+                os.system('cls' if os.name == 'nt' else 'clear')
                 update_order_status()
     else:
+        time.sleep(1)
+        os.system('cls' if os.name == 'nt' else 'clear')
         update_order_status()
 
 
