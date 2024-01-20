@@ -3,7 +3,6 @@ import requests
 import creds
 import time
 
-
 """
 BigCommerce Order Update Tool
 Author: Alex Powell
@@ -20,6 +19,8 @@ art = r"""
  | |_| | | | (_| |  __/ |    | |_| | |_) | (_| | (_| | ||  __/
   \___/|_|  \__,_|\___|_|     \___/| .__/ \__,_|\__,_|\__\___|
                                    |_|                        
+
+Author: Alex Powell     Version 1.0
 """
 
 
@@ -34,7 +35,7 @@ def get_order_details(order_id):
 
     if order_details == [{'status': 404, 'message': 'The requested resource was not found.'}]:
         print("Order Not Found!")
-        time.sleep(1)
+        time.sleep(2)
         os.system('cls' if os.name == 'nt' else 'clear')
         return update_order_status()
     else:
@@ -73,7 +74,7 @@ def update_order_status():
             }
             requests.put(url, headers=headers, json=payload)
             print(f"\nOrder {order_id} has been updated to Awaiting Pickup\n")
-            time.sleep(1)
+            time.sleep(2)
             os.system('cls' if os.name == 'nt' else 'clear')
             update_order_status()
 
@@ -86,21 +87,21 @@ def update_order_status():
             if archive == "y":
                 requests.delete(url, headers=headers)
                 print(f"\nOrder {order_id} has been updated to 'Complete' and archived.\n")
-                time.sleep(1)
+                time.sleep(2)
                 os.system('cls' if os.name == 'nt' else 'clear')
                 update_order_status()
             elif archive == "n":
                 print(f"\nOrder {order_id} has been updated to 'Complete'.\n")
-                time.sleep(1)
+                time.sleep(2)
                 os.system('cls' if os.name == 'nt' else 'clear')
                 update_order_status()
             else:
                 print("Invalid response. Please try again.\n")
-                time.sleep(1)
+                time.sleep(2)
                 os.system('cls' if os.name == 'nt' else 'clear')
                 update_order_status()
     else:
-        time.sleep(1)
+        time.sleep(2)
         os.system('cls' if os.name == 'nt' else 'clear')
         update_order_status()
 
