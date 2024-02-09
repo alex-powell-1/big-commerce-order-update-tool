@@ -73,8 +73,8 @@ def format_phone(phone_number, mode="Twilio", prefix=True):
 
 
 def send_text(order_number, name, phone_number):
-    message = (f"Hello {name}! Order {order_number} is ready for pickup at {creds.address}. "
-               f"Our hours are {creds.hours}")
+    message = (f"{creds.business_name}: Hello {name}! Order {order_number} is ready for pickup at {creds.address}. "
+               f"Our hours are {creds.hours}. See you soon!")
     client = Client(creds.account_sid, creds.auth_token)
     client.messages.create(from_=creds.TWILIO_PHONE_NUMBER, to=phone_number, body=message)
 
@@ -105,7 +105,7 @@ def update_order_status():
                     "status_id": 8,
                 }
                 requests.put(url, headers=headers, json=payload)
-                print(f"\nOrder {order_id} has been updated to Awaiting Pickup\n")
+                print(f"\nOrder {order_id} has been updated to Awaiting Pickup")
                 send_text(order_id, first_name, format_phone(phone, prefix=True))
                 print(f"\nText notification has been sent to {format_phone(phone, mode="Counterpoint")}\n")
                 time.sleep(1)
