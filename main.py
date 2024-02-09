@@ -47,16 +47,42 @@ def get_order_details(order_id):
         total = f"${"%.2f" % total}"
         first_name = order_details['billing_address']['first_name']
         last_name = order_details['billing_address']['last_name']
-        return date_created, status, item_count, total, first_name, last_name
+        phone = order_details['billing_address']['phone']
+        return date_created, status, item_count, total, first_name, last_name, phone
+
+
+def format_phone(phone_number, mode="Twilio", prefix=True):
+    """Cleanses input data and returns masked phone for either Twilio or Counterpoint configuration"""
+    phone_number_as_string = str(phone_number)
+    # Strip away extra symbols
+    formatted_phone = phone_number_as_string.replace(" ", "")  # Remove Spaces
+    formatted_phone = formatted_phone.replace("-", "")  # Remove Hyphens
+    formatted_phone = formatted_phone.replace("(", "")  # Remove Open Parenthesis
+    formatted_phone = formatted_phone.replace(")", "")  # Remove Close Parenthesis
+    formatted_phone = formatted_phone.replace("+1", "")  # Remove +1
+    formatted_phone = formatted_phone[-10:]  # Get last 10 characters
+    if mode == "Counterpoint":
+        # Masking ###-###-####
+        cp_phone = formatted_phone[0:3] + "-" + formatted_phone[3:6] + "-" + formatted_phone[6:10]
+        return cp_phone
+    else:
+        if prefix:
+            formatted_phone = "+1" + formatted_phone
+        return formatted_phone
+
+
+def send_text(phone_number):
+    pass
 
 
 def update_order_status():
     print(art)
     order_id = input("Enter order ID: ")
     if order_id != "":
-        date_created, status, item_count, total, first_name, last_name = get_order_details(order_id)
+        date_created, status, item_count, total, first_name, last_name, phone = get_order_details(order_id)
         print(f"\nDate Created: {date_created[:-6]}")
         print(f"Name: {first_name} {last_name}")
+        print(f"Phone: {format_phone(phone, mode="Counterpoint")}")
         print(f"Status: {status}")
         print(f"Item Count: {item_count}")
         print(f"Total: {total}\n")
@@ -76,6 +102,8 @@ def update_order_status():
                 }
                 requests.put(url, headers=headers, json=payload)
                 print(f"\nOrder {order_id} has been updated to Awaiting Pickup\n")
+                send_text(format_phone(phone, prefix=True))
+                print(f"\nText notification has been sent to {format_phone(phone, mode="Counterpoint")}\n")
                 time.sleep(1)
                 os.system('cls' if os.name == 'nt' else 'clear')
                 update_order_status()
@@ -116,5 +144,6 @@ def update_order_status():
     else:
         os.system('cls' if os.name == 'nt' else 'clear')
         update_order_status()
+
 
 update_order_status()
