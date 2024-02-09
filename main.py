@@ -3,6 +3,7 @@ import requests
 import creds
 import time
 import sys
+from twilio.rest import Client
 
 """
 BigCommerce Order Update Tool
@@ -71,8 +72,11 @@ def format_phone(phone_number, mode="Twilio", prefix=True):
         return formatted_phone
 
 
-def send_text(phone_number):
-    pass
+def send_text(order_number, name, phone_number):
+    message = (f"Hello {name}! Order {order_number} is ready for pickup at {creds.address}. "
+               f"Our hours are {creds.hours}")
+    client = Client(creds.account_sid, creds.auth_token)
+    client.messages.create(from_=creds.TWILIO_PHONE_NUMBER, to=phone_number, body=message)
 
 
 def update_order_status():
@@ -102,7 +106,7 @@ def update_order_status():
                 }
                 requests.put(url, headers=headers, json=payload)
                 print(f"\nOrder {order_id} has been updated to Awaiting Pickup\n")
-                send_text(format_phone(phone, prefix=True))
+                send_text(order_id, first_name, format_phone(phone, prefix=True))
                 print(f"\nText notification has been sent to {format_phone(phone, mode="Counterpoint")}\n")
                 time.sleep(1)
                 os.system('cls' if os.name == 'nt' else 'clear')
