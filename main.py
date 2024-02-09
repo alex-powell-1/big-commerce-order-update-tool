@@ -2,6 +2,7 @@ import os
 import requests
 import creds
 import time
+import sys
 
 """
 BigCommerce Order Update Tool
@@ -20,7 +21,7 @@ art = r"""
   \___/|_|  \__,_|\___|_|     \___/| .__/ \__,_|\__,_|\__\___|
                                    |_|                        
 
-Author: Alex Powell     Version 1.0
+Author: Alex Powell     Version: 1.0.1
 """
 
 
@@ -35,7 +36,7 @@ def get_order_details(order_id):
 
     if order_details == [{'status': 404, 'message': 'The requested resource was not found.'}]:
         print("Order Not Found!")
-        time.sleep(2)
+        time.sleep(1)
         os.system('cls' if os.name == 'nt' else 'clear')
         return update_order_status()
     else:
@@ -52,58 +53,68 @@ def get_order_details(order_id):
 def update_order_status():
     print(art)
     order_id = input("Enter order ID: ")
-    date_created, status, item_count, total, first_name, last_name = get_order_details(order_id)
-    print(f"\nDate Created: {date_created}")
-    print(f"Name: {first_name} {last_name}")
-    print(f"Status: {status}")
-    print(f"Item Count: {item_count}")
-    print(f"Total: {total}\n")
+    if order_id != "":
+        date_created, status, item_count, total, first_name, last_name = get_order_details(order_id)
+        print(f"\nDate Created: {date_created[:-6]}")
+        print(f"Name: {first_name} {last_name}")
+        print(f"Status: {status}")
+        print(f"Item Count: {item_count}")
+        print(f"Total: {total}\n")
 
-    mode = input("Press 1 for 'Awaiting Pickup'\nPress 2 for 'Complete'\nResponse: ")
+        mode = input("Press 1 for 'Awaiting Pickup'\nPress 2 for 'Complete'\nPress 3 to reset\nResponse: ")
 
-    if mode == "1" or mode == "2":
-        url = f" https://api.bigcommerce.com/stores/{store_hash}/v2/orders/{order_id}"
-        headers = {
-            'X-Auth-Token': access_token,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        }
-        if mode == "1":
-            payload = {
-                "status_id": 8,
+        if mode == "1" or mode == "2":
+            url = f" https://api.bigcommerce.com/stores/{store_hash}/v2/orders/{order_id}"
+            headers = {
+                'X-Auth-Token': access_token,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             }
-            requests.put(url, headers=headers, json=payload)
-            print(f"\nOrder {order_id} has been updated to Awaiting Pickup\n")
-            time.sleep(2)
+            if mode == "1":
+                payload = {
+                    "status_id": 8,
+                }
+                requests.put(url, headers=headers, json=payload)
+                print(f"\nOrder {order_id} has been updated to Awaiting Pickup\n")
+                time.sleep(1)
+                os.system('cls' if os.name == 'nt' else 'clear')
+                update_order_status()
+
+            if mode == "2":
+                payload = {
+                    "status_id": 10,
+                }
+                requests.put(url, headers=headers, json=payload)
+                archive = input("Archive order? Y or N: ").lower()
+                if archive == "y":
+                    requests.delete(url, headers=headers)
+                    print(f"\nOrder {order_id} has been updated to 'Complete' and archived.\n")
+                    time.sleep(1)
+                    os.system('cls' if os.name == 'nt' else 'clear')
+                    update_order_status()
+                elif archive == "n":
+                    print(f"\nOrder {order_id} has been updated to 'Complete'.\n")
+                    time.sleep(1)
+                    os.system('cls' if os.name == 'nt' else 'clear')
+
+                    update_order_status()
+                else:
+                    print("Invalid response. Please try again.\n")
+                    time.sleep(1)
+                    os.system('cls' if os.name == 'nt' else 'clear')
+                    update_order_status()
+        elif mode == "3":
+            print("Resetting.\n")
+            time.sleep(.5)
             os.system('cls' if os.name == 'nt' else 'clear')
             update_order_status()
-
-        if mode == "2":
-            payload = {
-                "status_id": 10,
-            }
-            requests.put(url, headers=headers, json=payload)
-            archive = input("Archive order? Y or N: ").lower()
-            if archive == "y":
-                requests.delete(url, headers=headers)
-                print(f"\nOrder {order_id} has been updated to 'Complete' and archived.\n")
-                time.sleep(2)
-                os.system('cls' if os.name == 'nt' else 'clear')
-                update_order_status()
-            elif archive == "n":
-                print(f"\nOrder {order_id} has been updated to 'Complete'.\n")
-                time.sleep(2)
-                os.system('cls' if os.name == 'nt' else 'clear')
-                update_order_status()
-            else:
-                print("Invalid response. Please try again.\n")
-                time.sleep(2)
-                os.system('cls' if os.name == 'nt' else 'clear')
-                update_order_status()
+        else:
+            print("Invalid response. Please try again.\n")
+            time.sleep(1)
+            os.system('cls' if os.name == 'nt' else 'clear')
+            update_order_status()
     else:
-        time.sleep(2)
         os.system('cls' if os.name == 'nt' else 'clear')
         update_order_status()
-
 
 update_order_status()
