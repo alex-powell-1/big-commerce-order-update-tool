@@ -2,7 +2,6 @@ import os
 import requests
 import creds
 import time
-import sys
 from twilio.rest import Client
 
 """
@@ -22,8 +21,10 @@ art = r"""
   \___/|_|  \__,_|\___|_|     \___/| .__/ \__,_|\__,_|\__\___|
                                    |_|                        
 
-Author: Alex Powell     Version: 1.0.1
+Author: Alex Powell     Version: 1.0.3
 """
+
+test_mode = False
 
 
 def get_order_details(order_id):
@@ -41,15 +42,22 @@ def get_order_details(order_id):
         os.system('cls' if os.name == 'nt' else 'clear')
         return update_order_status()
     else:
-        date_created = order_details['date_created']
-        status = order_details['status']
-        item_count = order_details['items_total']
-        total = float(order_details['total_inc_tax'])
-        total = f"${"%.2f" % total}"
-        first_name = order_details['billing_address']['first_name']
-        last_name = order_details['billing_address']['last_name']
-        phone = order_details['billing_address']['phone']
-        return date_created, status, item_count, total, first_name, last_name, phone
+        try:
+            date_created = order_details['date_created']
+            status = order_details['status']
+            item_count = order_details['items_total']
+            total = float(order_details['total_inc_tax'])
+            total = f"${"%.2f" % total}"
+            first_name = order_details['billing_address']['first_name']
+            last_name = order_details['billing_address']['last_name']
+            phone = order_details['billing_address']['phone']
+        except KeyError:
+            print("Order Not Found!")
+            time.sleep(1)
+            os.system('cls' if os.name == 'nt' else 'clear')
+            return update_order_status()
+        else:
+            return date_created, status, item_count, total, first_name, last_name, phone
 
 
 def format_phone(phone_number, mode="Twilio", prefix=True):
@@ -83,15 +91,23 @@ def update_order_status():
     print(art)
     order_id = input("Enter order ID: ")
     if order_id != "":
-        date_created, status, item_count, total, first_name, last_name, phone = get_order_details(order_id)
-        print(f"\nDate Created: {date_created[:-6]}")
-        print(f"Name: {first_name} {last_name}")
-        print(f"Phone: {format_phone(phone, mode="Counterpoint")}")
-        print(f"Status: {status}")
-        print(f"Item Count: {item_count}")
-        print(f"Total: {total}\n")
+        if test_mode:
+            date_created, status, item_count, total, first_name, last_name, phone = \
+                creds.dummy_data
+        else:
+            date_created, status, item_count, total, first_name, last_name, phone = get_order_details(order_id)
+            print(f"\nDate Created: {date_created[:-6]}")
+            print(f"Name: {first_name} {last_name}")
+            print(f"Phone: {format_phone(phone, mode="Counterpoint")}")
+            print(f"Status: {status}")
+            print(f"Item Count: {item_count}")
+            print(f"Total: {total}\n")
 
-        mode = input("Press 1 for 'Awaiting Pickup'\nPress 2 for 'Complete'\nPress 3 to reset\nResponse: ")
+        mode = input("Press 1 for 'Awaiting Pickup'\nPress 2 for 'Complete'\nPress 3 to reset\nResponse:")
+
+        # Barcode Scanner Double Enter Fix # 2
+        if mode == "":
+            mode = input("")
 
         if mode == "1" or mode == "2":
             url = f" https://api.bigcommerce.com/stores/{store_hash}/v2/orders/{order_id}"
@@ -135,11 +151,13 @@ def update_order_status():
                     time.sleep(1)
                     os.system('cls' if os.name == 'nt' else 'clear')
                     update_order_status()
+
         elif mode == "3":
             print("Resetting.\n")
             time.sleep(.5)
             os.system('cls' if os.name == 'nt' else 'clear')
             update_order_status()
+
         else:
             print("Invalid response. Please try again.\n")
             time.sleep(1)
