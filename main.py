@@ -7,7 +7,7 @@ from twilio.rest import Client
 """
 BigCommerce Order Update Tool
 Author: Alex Powell
-Written: January 19, 2024
+Updated: May 13, 2024
 
 """
 client_id = creds.client_id
@@ -21,10 +21,8 @@ art = r"""
   \___/|_|  \__,_|\___|_|     \___/| .__/ \__,_|\__,_|\__\___|
                                    |_|                        
 
-Author: Alex Powell     Version: 1.0.3
+Author: Alex Powell     Version: 1.0.4
 """
-
-test_mode = False
 
 
 def get_order_details(order_id):
@@ -83,25 +81,21 @@ def format_phone(phone_number, mode="Twilio", prefix=True):
 def send_text(order_number, name, phone_number):
     message = (f"{creds.business_name}: Hello {name}! Order {order_number} is ready for pickup at {creds.address}. "
                f"Our hours are {creds.hours}. See you soon!")
-    client = Client(creds.account_sid, creds.auth_token)
-    client.messages.create(from_=creds.TWILIO_PHONE_NUMBER, to=phone_number, body=message)
+    client = Client(creds.twilio_account_sid, creds.twilio_auth_token)
+    client.messages.create(from_=creds.twilio_phone_number, to=phone_number, body=message)
 
 
 def update_order_status():
     print(art)
     order_id = input("Enter order ID: ")
     if order_id != "":
-        if test_mode:
-            date_created, status, item_count, total, first_name, last_name, phone = \
-                creds.dummy_data
-        else:
-            date_created, status, item_count, total, first_name, last_name, phone = get_order_details(order_id)
-            print(f"\nDate Created: {date_created[:-6]}")
-            print(f"Name: {first_name} {last_name}")
-            print(f"Phone: {format_phone(phone, mode="Counterpoint")}")
-            print(f"Status: {status}")
-            print(f"Item Count: {item_count}")
-            print(f"Total: {total}\n")
+        date_created, status, item_count, total, first_name, last_name, phone = get_order_details(order_id)
+        print(f"\nDate Created: {date_created[:-6]}")
+        print(f"Name: {first_name} {last_name}")
+        print(f"Phone: {format_phone(phone, mode="Counterpoint")}")
+        print(f"Status: {status}")
+        print(f"Item Count: {item_count}")
+        print(f"Total: {total}\n")
 
         mode = input("Press 1 for 'Awaiting Pickup'\nPress 2 for 'Complete'\nPress 3 to reset\nResponse:")
 
@@ -132,40 +126,44 @@ def update_order_status():
                 payload = {
                     "status_id": 10,
                 }
-                requests.put(url, headers=headers, json=payload)
-                archive = input("Archive order? Y or N: ").lower()
-                if archive == "y":
+                # Update Order
+                try:
+                    print("Updating Order.")
+                    time.sleep(.5)
+                    requests.put(url, headers=headers, json=payload)
+                except Exception as e:
+                    print("Update Error")
+                    print(e)
+                # Archive Order
+                try:
+                    print("Archiving Order.")
+                    time.sleep(.5)
                     requests.delete(url, headers=headers)
-                    print(f"\nOrder {order_id} has been updated to 'Complete' and archived.\n")
-                    time.sleep(1)
-                    os.system('cls' if os.name == 'nt' else 'clear')
-                    update_order_status()
-                elif archive == "n":
-                    print(f"\nOrder {order_id} has been updated to 'Complete'.\n")
-                    time.sleep(1)
-                    os.system('cls' if os.name == 'nt' else 'clear')
-
-                    update_order_status()
+                except Exception as e:
+                    print("Delete Error")
+                    print(e)
                 else:
-                    print("Invalid response. Please try again.\n")
-                    time.sleep(1)
+                    print("Resetting.\n")
+                    time.sleep(.5)
                     os.system('cls' if os.name == 'nt' else 'clear')
-                    update_order_status()
+                    return update_order_status()
 
         elif mode == "3":
             print("Resetting.\n")
             time.sleep(.5)
             os.system('cls' if os.name == 'nt' else 'clear')
-            update_order_status()
+            return update_order_status()
 
         else:
             print("Invalid response. Please try again.\n")
             time.sleep(1)
             os.system('cls' if os.name == 'nt' else 'clear')
-            update_order_status()
+            return update_order_status()
     else:
+        print("Invalid response. Please try again.\n")
+        time.sleep(1)
         os.system('cls' if os.name == 'nt' else 'clear')
-        update_order_status()
+        return update_order_status()
 
 
 update_order_status()
